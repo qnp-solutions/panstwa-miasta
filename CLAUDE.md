@@ -180,27 +180,25 @@ Use `src/utils/normalizeAnswer.ts`.
 
 ---
 
-## Testing Approach
+## Testing
 
-### Unit Tests (Jest)
-- Pure functions: `calculateScores`, `normalizeAnswer`, `generateRoomCode`
-- Zustand stores: test via actions, verify state changes
-- Location: `__tests__/` folder co-located with the tested file
+- **Unit**: Jest + RNTL, co-located `__tests__/` folders, MSW mocks Firebase
+- **Integration**: Firebase emulator, `__tests__/integration/`, CI only
+- **Do not test**: styling, Expo Router navigation itself, Firebase SDK internals
+- **Highest priority**: `calculateScores` (11 required edge-case scenarios — see test-writer agent)
 
-### Component Tests (RNTL)
-- Test user interactions, not implementation details
-- Mock Firebase with MSW (Mock Service Worker)
-- Key tests: voting interactions, form submit, answer validation edge cases
+Use `/test <path>` to generate tests for any file or feature.
 
-### Integration Tests
-- Full game flow against Firebase emulator (NOT mocked)
-- Located in `__tests__/integration/`
-- Run in CI only: `npm run test:ci`
+---
 
-### Do NOT Test
-- Visual styling
-- Expo Router navigation itself
-- Firebase SDK internals
+## Custom Agents & Commands
+
+| Invoke | Agent | What it does |
+|--------|-------|-------------|
+| `/review [path]` | `code-reviewer` | Structural review: TypeScript, architecture, security, conventions. Returns Critical/Warnings/Nitpicks/Verdict. |
+| `/test <path>` | `test-writer` | Writes Jest + RNTL tests, runs them, returns coverage summary. |
+
+Agent definitions live in `.claude/agents/`. Both run on `claude-sonnet-4-6`.
 
 ---
 
