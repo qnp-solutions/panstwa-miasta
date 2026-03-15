@@ -1,0 +1,22 @@
+{
+  "app_name": "Państwa Miasta",
+  "loading": "Ładowanie...",
+  "error": "Coś poszło nie tak",
+  "retry": "Spróbuj ponownie",
+  "cancel": "Anuluj",
+  "confirm": "Potwierdź",
+  "ok": "OK",
+  "back": "Wróć",
+  "next": "Dalej",
+  "finish": "Zakończ",
+  "start": "Start",
+  "copy": "Skopiuj",
+  "copied": "Skopiowano!",
+  "settings": "Ustawienia",
+  "language": "Język",
+  "remove_ads": "Usuń reklamy",
+  "restore_purchases": "Przywróć zakupy",
+  "sign_out": "Wyloguj się",
+  "sign_in_with_google": "Zaloguj przez Google",
+  "sign_in_with_apple": "Zaloguj przez Apple"
+}

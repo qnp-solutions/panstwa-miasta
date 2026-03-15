@@ -1,0 +1,22 @@
+{
+  "app_name": "Państwa Miasta",
+  "loading": "Loading...",
+  "error": "Something went wrong",
+  "retry": "Try again",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "ok": "OK",
+  "back": "Back",
+  "next": "Next",
+  "finish": "Finish",
+  "start": "Start",
+  "copy": "Copy",
+  "copied": "Copied!",
+  "settings": "Settings",
+  "language": "Language",
+  "remove_ads": "Remove Ads",
+  "restore_purchases": "Restore Purchases",
+  "sign_out": "Sign Out",
+  "sign_in_with_google": "Sign in with Google",
+  "sign_in_with_apple": "Sign in with Apple"
+}

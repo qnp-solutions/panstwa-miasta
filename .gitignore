@@ -34,3 +34,20 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Firebase
+.firebaserc
+firebase-debug.log
+functions/lib/
+functions/node_modules/
+
+# iOS / Android build artifacts
+ios/build/
+ios/Pods/
+android/build/
+android/.gradle/
+android/app/build/
+
+# Secrets (never commit)
+.env
+.env.local

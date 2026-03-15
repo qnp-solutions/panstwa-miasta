@@ -1,0 +1,48 @@
+{
+  "create_game": "Utwórz grę",
+  "join_game": "Dołącz do gry",
+  "enter_room_code": "Wpisz kod pokoju",
+  "enter_nickname": "Twój pseudonim",
+  "join": "Dołącz",
+  "create": "Utwórz",
+  "lobby": {
+    "waiting_for_host": "Czekaj na start od gospodarza...",
+    "players": "Gracze",
+    "room_code": "Kod pokoju",
+    "share_code": "Udostępnij kod",
+    "start_game": "Rozpocznij grę",
+    "rounds": "Rund",
+    "countdown": "Czas po skończeniu (s)",
+    "categories": "Kategorie",
+    "add_category": "Dodaj kategorię",
+    "remove_category": "Usuń",
+    "min_players": "Potrzeba min. {{count}} graczy"
+  },
+  "round": {
+    "letter": "Litera",
+    "round": "Runda {{current}} z {{total}}",
+    "fill_in_words": "Wypełnij słowa na literę",
+    "done": "Gotowe!",
+    "finished_first": "{{nickname}} skończył{{suffix}} jako pierwszy!",
+    "time_left": "Pozostało {{seconds}}s"
+  },
+  "voting": {
+    "title": "Ocenianie odpowiedzi",
+    "vote_valid": "Prawidłowe",
+    "vote_invalid": "Nieprawidłowe",
+    "submit_votes": "Zatwierdź oceny",
+    "waiting_for_votes": "Czekam na oceny: {{done}}/{{total}}"
+  },
+  "results": {
+    "round_results": "Wyniki rundy {{round}}",
+    "total_score": "Łączny wynik",
+    "next_round": "Następna runda",
+    "end_game": "Zakończ grę",
+    "game_over": "Koniec gry!",
+    "winner": "Zwycięzca",
+    "points": "{{count}} pkt",
+    "bonus": "Bonus! +{{points}}",
+    "unique": "Unikalny +{{points}}",
+    "shared": "Wspólny +{{points}}"
+  }
+}

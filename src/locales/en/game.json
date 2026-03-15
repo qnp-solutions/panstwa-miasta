@@ -1,0 +1,48 @@
+{
+  "create_game": "Create Game",
+  "join_game": "Join Game",
+  "enter_room_code": "Enter room code",
+  "enter_nickname": "Your nickname",
+  "join": "Join",
+  "create": "Create",
+  "lobby": {
+    "waiting_for_host": "Waiting for the host to start...",
+    "players": "Players",
+    "room_code": "Room Code",
+    "share_code": "Share Code",
+    "start_game": "Start Game",
+    "rounds": "Rounds",
+    "countdown": "Time after finish (s)",
+    "categories": "Categories",
+    "add_category": "Add category",
+    "remove_category": "Remove",
+    "min_players": "Need at least {{count}} players"
+  },
+  "round": {
+    "letter": "Letter",
+    "round": "Round {{current}} of {{total}}",
+    "fill_in_words": "Fill in words starting with",
+    "done": "Done!",
+    "finished_first": "{{nickname}} finished first!",
+    "time_left": "{{seconds}}s left"
+  },
+  "voting": {
+    "title": "Vote on answers",
+    "vote_valid": "Valid",
+    "vote_invalid": "Invalid",
+    "submit_votes": "Submit Votes",
+    "waiting_for_votes": "Waiting for votes: {{done}}/{{total}}"
+  },
+  "results": {
+    "round_results": "Round {{round}} Results",
+    "total_score": "Total Score",
+    "next_round": "Next Round",
+    "end_game": "End Game",
+    "game_over": "Game Over!",
+    "winner": "Winner",
+    "points": "{{count}} pts",
+    "bonus": "Bonus! +{{points}}",
+    "unique": "Unique +{{points}}",
+    "shared": "Shared +{{points}}"
+  }
+}

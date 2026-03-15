@@ -1,0 +1,10 @@
+{
+  "country": "Country",
+  "city": "City",
+  "river": "River",
+  "plant": "Plant",
+  "animal": "Animal",
+  "name": "Name",
+  "profession": "Profession",
+  "fruit": "Fruit"
+}
