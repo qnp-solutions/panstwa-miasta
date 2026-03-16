@@ -1,13 +1,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
 import { initializeApp } from 'firebase-admin/app';
 import { z } from 'zod';
-import {
-  generateRoomCode,
-  DEFAULT_COUNTDOWN_SECONDS,
-  MAX_PLAYERS,
-} from '../shared/constants';
+import { generateRoomCode } from '../shared/constants';
 import type { RoomDocument, Language } from '../shared/types';
 
 // Initialize Admin SDK once (idempotent)

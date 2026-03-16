@@ -1,4 +1,4 @@
-/** Category keys (language-agnostic). Display names are in locales/*/categories.json */
+/** Category keys (language-agnostic). Display names are in locales/{lang}/categories.json */
 export const DEFAULT_CATEGORIES_PL = [
   'country',
   'city',
