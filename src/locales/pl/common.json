@@ -18,5 +18,19 @@
   "restore_purchases": "Przywróć zakupy",
   "sign_out": "Wyloguj się",
   "sign_in_with_google": "Zaloguj przez Google",
-  "sign_in_with_apple": "Zaloguj przez Apple"
+  "sign_in_with_apple": "Zaloguj przez Apple",
+  "continue_as_guest": "Kontynuuj jako gość",
+  "nickname_placeholder": "Wpisz pseudonim",
+  "nickname_required": "Pseudonim jest wymagany",
+  "nickname_max": "Maks. {{max}} znaków",
+  "error_network": "Brak połączenia z internetem",
+  "error_too_many_requests": "Zbyt wiele prób. Spróbuj później",
+  "error_user_disabled": "Konto zostało wyłączone",
+  "error_operation_not_allowed": "Ta operacja nie jest dozwolona",
+  "error_room_not_found": "Pokój nie istnieje",
+  "error_room_full": "Pokój jest pełny",
+  "error_game_already_started": "Gra już się rozpoczęła",
+  "error_not_host": "Tylko gospodarz może to zrobić",
+  "error_not_signed_in": "Musisz się zalogować",
+  "error_invalid_input": "Nieprawidłowe dane"
 }
