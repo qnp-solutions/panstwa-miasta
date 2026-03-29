@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as Clipboard from 'expo-clipboard';
@@ -6,9 +6,9 @@ import { useRoomStore } from '../../../src/features/room/store/roomStore';
 import { useAuthStore } from '../../../src/features/auth/store/authStore';
 import { leaveRoom } from '../../../src/features/room/services/roomService';
 import { MIN_PLAYERS } from '../../../src/constants/game';
-import type { PlayerSummary } from '../../../src/types/firebase';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../../src/services/firebase/config';
+import { getErrorKey } from '../../../src/services/firebase/errors';
 import { useState } from 'react';
 
 export default function LobbyScreen() {
@@ -21,10 +21,17 @@ export default function LobbyScreen() {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState('');
 
-  if (!room || !roomCode) return null;
+  if (!room || !roomCode) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#4ecdc4" />
+      </View>
+    );
+  }
 
-  const players = Object.values(room.players) as PlayerSummary[];
+  const players = Object.values(room.players);
   const isHost = user?.uid === room.hostUid;
   const canStart = players.length >= MIN_PLAYERS;
 
@@ -43,11 +50,16 @@ export default function LobbyScreen() {
   }
 
   async function handleStart() {
+    setStartError('');
     setStarting(true);
     try {
-      const fn = httpsCallable(functions, 'startRound');
+      const fn = httpsCallable<{ roomCode: string }, { letter: string; roundIndex: number }>(
+        functions,
+        'startRound',
+      );
       await fn({ roomCode });
     } catch (err) {
+      setStartError(t(getErrorKey(err)));
       setStarting(false);
     }
   }
@@ -102,17 +114,20 @@ export default function LobbyScreen() {
       </View>
 
       {isHost ? (
-        <Pressable
-          style={[styles.startButton, (!canStart || starting) && styles.disabled]}
-          onPress={handleStart}
-          disabled={!canStart || starting}
-        >
-          <Text style={styles.startButtonText}>
-            {canStart
-              ? t('lobby.start_game')
-              : t('lobby.min_players', { count: MIN_PLAYERS })}
-          </Text>
-        </Pressable>
+        <>
+          <Pressable
+            style={[styles.startButton, (!canStart || starting) && styles.disabled]}
+            onPress={handleStart}
+            disabled={!canStart || starting}
+          >
+            <Text style={styles.startButtonText}>
+              {canStart
+                ? t('lobby.start_game')
+                : t('lobby.min_players', { count: MIN_PLAYERS })}
+            </Text>
+          </Pressable>
+          {startError ? <Text style={styles.error}>{startError}</Text> : null}
+        </>
       ) : (
         <Text style={styles.waitingText}>{t('lobby.waiting_for_host')}</Text>
       )}
@@ -227,5 +242,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
     marginBottom: 40,
+  },
+  error: {
+    color: '#E63946',
+    fontSize: 13,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

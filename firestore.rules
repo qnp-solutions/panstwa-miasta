@@ -23,7 +23,7 @@ service cloud.firestore {
     // ─── Rooms ───────────────────────────────────────────────────────
     match /rooms/{roomCode} {
       allow read: if isAuth();
-      allow create: if isAuth();
+      allow create: if false; // only Cloud Functions create rooms (Admin SDK bypasses rules)
       allow update: if isPlayerInRoom(roomCode) && statusUnchanged();
       allow delete: if false; // only Cloud Functions delete rooms
 
@@ -32,11 +32,15 @@ service cloud.firestore {
         allow read: if isPlayerInRoom(roomCode);
 
         // Players can only update their own playerAnswers entry
-        // and cannot change the status field
+        // and cannot change the status field or any other field.
+        // The diff must affect only the playerAnswers map, and within
+        // that map only the entry keyed by the caller's own uid.
         allow update: if isPlayerInRoom(roomCode)
           && statusUnchanged()
           && request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['playerAnswers']);
+               .hasOnly(['playerAnswers'])
+          && request.resource.data.playerAnswers.diff(resource.data.playerAnswers)
+               .affectedKeys().hasOnly([request.auth.uid]);
 
         allow create, delete: if false; // only Cloud Functions
 

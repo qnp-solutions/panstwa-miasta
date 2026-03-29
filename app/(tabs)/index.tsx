@@ -53,7 +53,7 @@ export default function HomeScreen() {
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
+          <Text style={styles.dividerText}>{tc('or')}</Text>
           <View style={styles.dividerLine} />
         </View>
 

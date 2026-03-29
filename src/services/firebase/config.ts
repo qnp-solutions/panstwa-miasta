@@ -1,8 +1,8 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
-import { getDatabase } from 'firebase/database';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -22,5 +22,16 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app, 'europe-west1');
 export const rtdb = getDatabase(app);
+
+// Connect to Firebase emulators for local development
+// Set EXPO_PUBLIC_USE_EMULATORS=true in .env.local to enable
+let emulatorsConnected = false;
+if (process.env.EXPO_PUBLIC_USE_EMULATORS === 'true' && !emulatorsConnected) {
+  emulatorsConnected = true;
+  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+  connectDatabaseEmulator(rtdb, 'localhost', 9000);
+}
 
 export { app };

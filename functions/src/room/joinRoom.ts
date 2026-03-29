@@ -11,7 +11,7 @@ const JoinRoomSchema = z.object({
   nickname: z.string().min(1).max(20),
 });
 
-export const joinRoom = onCall(async (request) => {
+export const joinRoom = onCall({ region: 'europe-west1' }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be signed in');
 
   const parsed = JoinRoomSchema.safeParse(request.data);
@@ -21,36 +21,37 @@ export const joinRoom = onCall(async (request) => {
   const { uid } = request.auth;
 
   const roomRef = db.collection('rooms').doc(roomCode);
-  const roomSnap = await roomRef.get();
 
-  if (!roomSnap.exists) throw new HttpsError('not-found', 'Room not found');
+  await db.runTransaction(async (tx) => {
+    const roomSnap = await tx.get(roomRef);
 
-  const room = roomSnap.data() as RoomDocument;
+    if (!roomSnap.exists) throw new HttpsError('not-found', 'Room not found');
 
-  if (room.status !== 'lobby') throw new HttpsError('failed-precondition', 'Game already started');
+    const room = roomSnap.data() as RoomDocument;
 
-  if (uid in room.players) {
-    // Already in room — just return
-    return { roomCode };
-  }
+    if (room.status !== 'lobby') throw new HttpsError('failed-precondition', 'Game already started');
 
-  const playerCount = Object.keys(room.players).length;
-  if (playerCount >= MAX_PLAYERS) throw new HttpsError('resource-exhausted', 'Room is full');
+    // Already in room — idempotent, nothing to write
+    if (uid in room.players) return;
 
-  const now = FieldValue.serverTimestamp();
-  const color = pickColor(uid);
+    const playerCount = Object.keys(room.players).length;
+    if (playerCount >= MAX_PLAYERS) throw new HttpsError('resource-exhausted', 'Room is full');
 
-  await roomRef.update({
-    [`players.${uid}`]: {
-      uid,
-      nickname,
-      avatarColor: color,
-      totalScore: 0,
-      isOnline: true,
-      isHost: false,
-      joinedAt: now,
-    },
-    updatedAt: now,
+    const now = FieldValue.serverTimestamp();
+    const color = pickColor(uid);
+
+    tx.update(roomRef, {
+      [`players.${uid}`]: {
+        uid,
+        nickname,
+        avatarColor: color,
+        totalScore: 0,
+        isOnline: true,
+        isHost: false,
+        joinedAt: now,
+      },
+      updatedAt: now,
+    });
   });
 
   return { roomCode };

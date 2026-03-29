@@ -10,7 +10,7 @@ const db = getFirestore();
  * When all players have submitted votes, calculates scores and advances game state.
  */
 export const processVotes = onDocumentWritten(
-  'rooms/{roomCode}/rounds/{roundIndex}/votes/{voterUid}',
+  { document: 'rooms/{roomCode}/rounds/{roundIndex}/votes/{voterUid}', region: 'europe-west1' },
   async (event) => {
     const { roomCode, roundIndex } = event.params;
 

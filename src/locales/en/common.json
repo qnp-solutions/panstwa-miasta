@@ -32,5 +32,6 @@
   "error_game_already_started": "Game already started",
   "error_not_host": "Only the host can do this",
   "error_not_signed_in": "You must be signed in",
-  "error_invalid_input": "Invalid input"
+  "error_invalid_input": "Invalid input",
+  "or": "or"
 }

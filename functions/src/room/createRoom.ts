@@ -1,12 +1,12 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { initializeApp } from 'firebase-admin/app';
+import { getApps, initializeApp } from 'firebase-admin/app';
 import { z } from 'zod';
 import { generateRoomCode } from '../shared/constants';
 import type { RoomDocument, Language } from '../shared/types';
 
-// Initialize Admin SDK once (idempotent)
-try { initializeApp(); } catch {}
+// Initialize Admin SDK once — guard against double-init in emulator hot-reload
+if (getApps().length === 0) initializeApp();
 
 const db = getFirestore();
 
@@ -18,7 +18,7 @@ const CreateRoomSchema = z.object({
   countdownDuration: z.number().int().min(5).max(60),
 });
 
-export const createRoom = onCall(async (request) => {
+export const createRoom = onCall({ region: 'europe-west1' }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be signed in');
 
   const parsed = CreateRoomSchema.safeParse(request.data);
@@ -37,7 +37,17 @@ export const createRoom = onCall(async (request) => {
   if (!roomCode) throw new HttpsError('internal', 'Could not generate room code');
 
   const now = FieldValue.serverTimestamp();
-  const room: Omit<RoomDocument, 'createdAt' | 'updatedAt'> & { createdAt: unknown; updatedAt: unknown } = {
+
+  // Use FirestoreWriteData to allow FieldValue sentinels where Timestamps are expected
+  type FirestoreWriteData = Omit<RoomDocument, 'createdAt' | 'updatedAt' | 'players'> & {
+    createdAt: ReturnType<typeof FieldValue.serverTimestamp>;
+    updatedAt: ReturnType<typeof FieldValue.serverTimestamp>;
+    players: Record<string, Omit<RoomDocument['players'][string], 'joinedAt'> & {
+      joinedAt: ReturnType<typeof FieldValue.serverTimestamp>;
+    }>;
+  };
+
+  const room: FirestoreWriteData = {
     roomCode,
     hostUid: uid,
     status: 'lobby',
@@ -55,7 +65,7 @@ export const createRoom = onCall(async (request) => {
         totalScore: 0,
         isOnline: true,
         isHost: true,
-        joinedAt: now as never,
+        joinedAt: now,
       },
     },
     createdAt: now,

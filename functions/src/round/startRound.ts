@@ -1,15 +1,14 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
-import { pickRandomLetter } from '../shared/constants';
-import { MIN_PLAYERS } from '../shared/constants';
+import { pickRandomLetter, MIN_PLAYERS } from '../shared/constants';
 import type { RoomDocument, RoundDocument, Language } from '../shared/types';
 
 const db = getFirestore();
 
 const StartRoundSchema = z.object({ roomCode: z.string().length(6) });
 
-export const startRound = onCall(async (request) => {
+export const startRound = onCall({ region: 'europe-west1' }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be signed in');
 
   const parsed = StartRoundSchema.safeParse(request.data);

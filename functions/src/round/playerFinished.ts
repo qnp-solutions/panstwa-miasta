@@ -10,7 +10,7 @@ const db = getFirestore();
  * Also handles the case where ALL players have submitted early (skips countdown).
  */
 export const onPlayerFinished = onDocumentUpdated(
-  'rooms/{roomCode}/rounds/{roundIndex}',
+  { document: 'rooms/{roomCode}/rounds/{roundIndex}', region: 'europe-west1' },
   async (event) => {
     const before = event.data?.before.data() as RoundDocument | undefined;
     const after = event.data?.after.data() as RoundDocument | undefined;

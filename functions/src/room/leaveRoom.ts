@@ -7,7 +7,7 @@ const db = getFirestore();
 
 const LeaveRoomSchema = z.object({ roomCode: z.string().length(6) });
 
-export const leaveRoom = onCall(async (request) => {
+export const leaveRoom = onCall({ region: 'europe-west1' }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Must be signed in');
 
   const parsed = LeaveRoomSchema.safeParse(request.data);
