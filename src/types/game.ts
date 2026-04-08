@@ -23,5 +23,8 @@ export interface CategoryScore {
   categoryKey: string;
   answer: string;
   points: number;
-  reason: 'unique' | 'shared' | 'bonus' | 'invalid' | 'empty';
+  reason: 'unique' | 'shared' | 'bonus' | 'invalid' | 'empty' | 'vote_tie';
+  /** Vote counts for this answer (valid / invalid) */
+  validVotes?: number;
+  invalidVotes?: number;
 }

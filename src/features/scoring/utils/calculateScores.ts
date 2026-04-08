@@ -1,5 +1,4 @@
 import { SCORING } from '../../../constants/scoring';
-import { VOTE_VALIDITY_THRESHOLD } from '../../../constants/game';
 import { normalizeAnswer } from '../../../utils/normalizeAnswer';
 import type { VoteValue, RoundDocument, VoteDocument } from '../../../types/firebase';
 import type { CategoryScore } from '../../../types/game';
@@ -19,20 +18,18 @@ export interface ScoreResult {
 }
 
 /**
- * Determines whether an answer is valid based on votes from other players.
- * A player cannot vote on their own answer (those votes are ignored).
+ * Returns vote counts for a specific answer.
+ * Only counts votes from other players (a player can't vote on their own answer).
  */
-function isAnswerValid(
+function getVoteCounts(
   targetUid: string,
   categoryKey: string,
   votes: Record<string, VoteDocument>,
   playerUids: string[],
-): boolean {
+): { validVotes: number; invalidVotes: number } {
   const otherUids = playerUids.filter((uid) => uid !== targetUid);
-  if (otherUids.length === 0) return true; // single player edge case
-
   let validVotes = 0;
-  let totalVotes = 0;
+  let invalidVotes = 0;
 
   for (const voterUid of otherUids) {
     const voterDoc = votes[voterUid];
@@ -40,49 +37,81 @@ function isAnswerValid(
     const voteKey = `${targetUid}_${categoryKey}`;
     const vote: VoteValue | undefined = voterDoc.votes[voteKey];
     if (!vote || vote === 'abstain') continue;
-    totalVotes++;
     if (vote === 'valid') validVotes++;
+    else invalidVotes++;
   }
 
-  if (totalVotes === 0) return true; // no one voted → assume valid
-  return validVotes / totalVotes >= VOTE_VALIDITY_THRESHOLD;
+  return { validVotes, invalidVotes };
+}
+
+/**
+ * Determines answer validity from votes:
+ * - 'valid': more valid votes than invalid → normal scoring
+ * - 'tie': equal valid and invalid votes → 5 points
+ * - 'invalid': more invalid votes than valid → 0 points
+ * - No votes cast → treated as valid
+ */
+function getAnswerValidity(
+  validVotes: number,
+  invalidVotes: number,
+): 'valid' | 'tie' | 'invalid' {
+  if (validVotes + invalidVotes === 0) return 'valid'; // no votes → assume valid
+  if (validVotes > invalidVotes) return 'valid';
+  if (validVotes === invalidVotes) return 'tie';
+  return 'invalid';
 }
 
 /**
  * Pure function — calculates per-round scores for all players.
  * Used by both the Cloud Function (server) and tests.
+ *
+ * Scoring rules:
+ * - Voted invalid (majority): 0 points
+ * - Vote tie (equal valid/invalid): 5 points
+ * - Only valid answer in category: 15 points (bonus)
+ * - Unique valid answer (others have different valid answers): 10 points
+ * - Shared valid answer (same as another player, case-insensitive): 5 points
  */
 export function calculateScores(input: CalculateScoresInput): ScoreResult {
   const { round, votes, categories, playerUids } = input;
   const roundScores: Record<string, number> = {};
   const breakdown: Record<string, CategoryScore[]> = {};
 
-  // Initialize
   for (const uid of playerUids) {
     roundScores[uid] = 0;
     breakdown[uid] = [];
   }
 
   for (const categoryKey of categories) {
-    // Collect valid answers for this category
-    const validAnswers: Record<string, string> = {}; // uid → normalized answer
+    // First pass: determine vote validity and collect vote counts per player
+    const playerVoteInfo: Record<string, {
+      rawAnswer: string;
+      validity: 'valid' | 'tie' | 'invalid';
+      validVotes: number;
+      invalidVotes: number;
+    }> = {};
+
+    const validAnswers: Record<string, string> = {}; // uid → normalized answer (only for 'valid' answers)
 
     for (const uid of playerUids) {
-      const playerAnswers = round.playerAnswers[uid];
-      const rawAnswer = playerAnswers?.answers[categoryKey] ?? '';
-      if (!rawAnswer.trim()) continue; // empty answer
+      const rawAnswer = round.playerAnswers[uid]?.answers[categoryKey] ?? '';
+      if (!rawAnswer.trim()) continue;
 
-      const valid = isAnswerValid(uid, categoryKey, votes, playerUids);
-      if (valid) {
+      const { validVotes, invalidVotes } = getVoteCounts(uid, categoryKey, votes, playerUids);
+      const validity = getAnswerValidity(validVotes, invalidVotes);
+
+      playerVoteInfo[uid] = { rawAnswer, validity, validVotes, invalidVotes };
+
+      if (validity === 'valid') {
         validAnswers[uid] = normalizeAnswer(rawAnswer);
       }
     }
 
-    // Count occurrences of each normalized answer among valid answers
-    const answerCounts: Record<string, string[]> = {}; // normalizedAnswer → [uid]
+    // Group valid answers by normalized form (case-insensitive comparison)
+    const answerGroups: Record<string, string[]> = {};
     for (const [uid, normalized] of Object.entries(validAnswers)) {
-      if (!answerCounts[normalized]) answerCounts[normalized] = [];
-      answerCounts[normalized].push(uid);
+      if (!answerGroups[normalized]) answerGroups[normalized] = [];
+      answerGroups[normalized].push(uid);
     }
 
     const totalValidPlayers = Object.keys(validAnswers).length;
@@ -90,39 +119,71 @@ export function calculateScores(input: CalculateScoresInput): ScoreResult {
     // Assign scores per player
     for (const uid of playerUids) {
       const rawAnswer = round.playerAnswers[uid]?.answers[categoryKey] ?? '';
-      const normalized = validAnswers[uid]; // undefined if invalid/empty
+      const info = playerVoteInfo[uid];
 
-      if (!normalized) {
-        // Invalid or empty
+      if (!rawAnswer.trim()) {
+        breakdown[uid].push({ categoryKey, answer: '', points: 0, reason: 'empty' });
+        continue;
+      }
+
+      if (!info) {
+        breakdown[uid].push({ categoryKey, answer: rawAnswer, points: 0, reason: 'empty' });
+        continue;
+      }
+
+      // Vote tie → fixed 5 points
+      if (info.validity === 'tie') {
+        roundScores[uid] += SCORING.SHARED;
         breakdown[uid].push({
           categoryKey,
           answer: rawAnswer,
-          points: 0,
-          reason: rawAnswer.trim() ? 'invalid' : 'empty',
+          points: SCORING.SHARED,
+          reason: 'vote_tie',
+          validVotes: info.validVotes,
+          invalidVotes: info.invalidVotes,
         });
         continue;
       }
 
-      const shareGroup = answerCounts[normalized];
+      // Voted invalid → 0 points
+      if (info.validity === 'invalid') {
+        breakdown[uid].push({
+          categoryKey,
+          answer: rawAnswer,
+          points: 0,
+          reason: 'invalid',
+          validVotes: info.validVotes,
+          invalidVotes: info.invalidVotes,
+        });
+        continue;
+      }
+
+      // Valid answer — score based on uniqueness
+      const normalized = validAnswers[uid];
+      const shareGroup = answerGroups[normalized];
       let points: number;
       let reason: CategoryScore['reason'];
 
       if (totalValidPlayers === 1) {
-        // Only one player has ANY valid answer in this category
         points = SCORING.BONUS;
         reason = 'bonus';
       } else if (shareGroup.length > 1) {
-        // Multiple players share this exact answer
         points = SCORING.SHARED;
         reason = 'shared';
       } else {
-        // Unique valid answer among multiple valid answers
         points = SCORING.UNIQUE;
         reason = 'unique';
       }
 
       roundScores[uid] += points;
-      breakdown[uid].push({ categoryKey, answer: rawAnswer, points, reason });
+      breakdown[uid].push({
+        categoryKey,
+        answer: rawAnswer,
+        points,
+        reason,
+        validVotes: info.validVotes,
+        invalidVotes: info.invalidVotes,
+      });
     }
   }
 

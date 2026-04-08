@@ -16,7 +16,8 @@ export const onPlayerFinished = onDocumentUpdated(
     const after = event.data?.after.data() as RoundDocument | undefined;
 
     if (!before || !after) return;
-    if (after.status !== 'active') return; // only act during active round
+    // Act during active (first submission) or countdown (remaining players submitting)
+    if (after.status !== 'active' && after.status !== 'countdown') return;
 
     const { roomCode } = event.params;
     const roomRef = db.collection('rooms').doc(roomCode);
@@ -33,14 +34,8 @@ export const onPlayerFinished = onDocumentUpdated(
     );
     const allSubmitted = submittedUids.length === playerUids.length;
 
-    // Check if this update introduced the FIRST submission
-    const wasAnySubmittedBefore = playerUids.some(
-      (uid) => before.playerAnswers[uid]?.submittedAt != null,
-    );
-    const isFirstSubmission = !wasAnySubmittedBefore && submittedUids.length > 0;
-
     if (allSubmitted) {
-      // Everyone done — skip countdown, go straight to voting
+      // Everyone done — skip/end countdown, go straight to voting
       const batch = db.batch();
       batch.update(roundRef, { status: 'voting', endedAt: FieldValue.serverTimestamp() });
       batch.update(roomRef, { status: 'voting', updatedAt: FieldValue.serverTimestamp() });
@@ -48,8 +43,15 @@ export const onPlayerFinished = onDocumentUpdated(
       return;
     }
 
+    // First submission detection only applies during active status
+    if (after.status !== 'active') return;
+
+    const wasAnySubmittedBefore = playerUids.some(
+      (uid) => before.playerAnswers[uid]?.submittedAt != null,
+    );
+    const isFirstSubmission = !wasAnySubmittedBefore && submittedUids.length > 0;
+
     if (isFirstSubmission) {
-      // Start the countdown
       const firstFinisherUid = submittedUids[0];
       const countdownMs = room.countdownDuration * 1000;
       const countdownEndsAt = Timestamp.fromMillis(Date.now() + countdownMs);
@@ -63,11 +65,6 @@ export const onPlayerFinished = onDocumentUpdated(
       });
       batch.update(roomRef, { status: 'countdown', updatedAt: FieldValue.serverTimestamp() });
       await batch.commit();
-
-      // Schedule the endRound via a Cloud Task
-      // (Cloud Tasks setup happens in firebase.json + GCP Console;
-      //  for now we use a simple setTimeout-based approach via a scheduled function)
-      // TODO: Replace with Cloud Tasks for production reliability
     }
   },
 );

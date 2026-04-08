@@ -55,6 +55,15 @@ export interface RoomDocument {
   updatedAt: Timestamp;
 }
 
+/** Per-category scoring breakdown stored by processVotes CF */
+export interface StoredCategoryBreakdown {
+  answer: string;
+  points: number;
+  reason: 'unique' | 'shared' | 'bonus' | 'invalid' | 'empty' | 'vote_tie';
+  validVotes: number;
+  invalidVotes: number;
+}
+
 /** /rooms/{roomCode}/rounds/{roundIndex} */
 export interface RoundDocument {
   roundIndex: number;
@@ -67,6 +76,8 @@ export interface RoundDocument {
   playerAnswers: Record<string, PlayerAnswers>;
   /** null until scoring is complete */
   scores: Record<string, number> | null;
+  /** Per-player per-category breakdown, set by processVotes CF alongside scores */
+  scoreBreakdown: Record<string, StoredCategoryBreakdown[]> | null;
 }
 
 /** /rooms/{roomCode}/rounds/{roundIndex}/votes/{voterUid} */

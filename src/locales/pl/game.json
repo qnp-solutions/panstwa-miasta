@@ -35,14 +35,26 @@
   },
   "results": {
     "round_results": "Wyniki rundy {{round}}",
+    "round_breakdown": "Szczegóły rundy {{round}}",
     "total_score": "Łączny wynik",
     "next_round": "Następna runda",
     "end_game": "Zakończ grę",
     "game_over": "Koniec gry!",
     "winner": "Zwycięzca",
+    "final_ranking": "Ranking końcowy",
+    "game_summary": "Podsumowanie gry",
+    "place_1": "1. miejsce",
+    "place_2": "2. miejsce",
+    "place_3": "3. miejsce",
+    "round_label": "Runda {{round}}",
+    "letter_label": "Litera: {{letter}}",
     "points": "{{count}} pkt",
     "bonus": "Bonus! +{{points}}",
     "unique": "Unikalny +{{points}}",
-    "shared": "Wspólny +{{points}}"
+    "shared": "Wspólny +{{points}}",
+    "invalid": "Nieprawidłowe",
+    "empty": "Brak odpowiedzi",
+    "vote_tie": "Remis +{{points}}",
+    "votes": "{{valid}} za / {{invalid}} przeciw"
   }
 }

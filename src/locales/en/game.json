@@ -35,14 +35,26 @@
   },
   "results": {
     "round_results": "Round {{round}} Results",
+    "round_breakdown": "Round {{round}} Breakdown",
     "total_score": "Total Score",
     "next_round": "Next Round",
     "end_game": "End Game",
     "game_over": "Game Over!",
     "winner": "Winner",
+    "final_ranking": "Final Ranking",
+    "game_summary": "Game Summary",
+    "place_1": "1st Place",
+    "place_2": "2nd Place",
+    "place_3": "3rd Place",
+    "round_label": "Round {{round}}",
+    "letter_label": "Letter: {{letter}}",
     "points": "{{count}} pts",
     "bonus": "Bonus! +{{points}}",
     "unique": "Unique +{{points}}",
-    "shared": "Shared +{{points}}"
+    "shared": "Shared +{{points}}",
+    "invalid": "Invalid",
+    "empty": "No answer",
+    "vote_tie": "Tie +{{points}}",
+    "votes": "{{valid}} valid / {{invalid}} invalid"
   }
 }

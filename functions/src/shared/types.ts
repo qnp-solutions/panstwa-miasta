@@ -50,6 +50,14 @@ export interface RoomDocument {
   updatedAt: Timestamp;
 }
 
+export interface StoredCategoryBreakdown {
+  answer: string;
+  points: number;
+  reason: 'unique' | 'shared' | 'bonus' | 'invalid' | 'empty' | 'vote_tie';
+  validVotes: number;
+  invalidVotes: number;
+}
+
 export interface RoundDocument {
   roundIndex: number;
   letter: string;
@@ -60,6 +68,7 @@ export interface RoundDocument {
   endedAt: Timestamp | null;
   playerAnswers: Record<string, PlayerAnswers>;
   scores: Record<string, number> | null;
+  scoreBreakdown: Record<string, StoredCategoryBreakdown[]> | null;
 }
 
 export interface VoteDocument {

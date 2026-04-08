@@ -63,6 +63,7 @@ export const startRound = onCall({ region: 'europe-west1' }, async (request) => 
     endedAt: null,
     playerAnswers,
     scores: null,
+    scoreBreakdown: null,
   };
 
   const batch = db.batch();

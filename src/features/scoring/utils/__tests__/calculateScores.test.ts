@@ -17,6 +17,7 @@ function makeRound(
     countdownEndsAt: NULL_TIMESTAMP,
     endedAt: NULL_TIMESTAMP,
     scores: null,
+    scoreBreakdown: null,
     playerAnswers: Object.fromEntries(
       Object.entries(playerAnswers).map(([uid, answers]) => [
         uid,
@@ -192,9 +193,9 @@ describe('calculateScores', () => {
     expect(breakdown.p5[0].reason).toBe('empty');
   });
 
-  // ── Scenario 7: Vote threshold edge — exactly 50% valid → valid ────────────
-  it('scenario 7 — exactly 50% valid votes (≥ threshold 0.5): answer is valid', () => {
-    // p1 is the target; p2 votes valid, p3 votes invalid → 1/2 = 0.5 ≥ 0.5 → valid
+  // ── Scenario 7: Vote tie (equal valid/invalid) → 5 points ─────────────────
+  it('scenario 7 — exactly 50% valid votes (tie): answer gets shared 5 with reason "vote_tie"', () => {
+    // p1 is the target; p2 votes valid, p3 votes invalid → 1 valid, 1 invalid → tie
     const round = makeRound({
       p1: { country: 'Kenia' },
       p2: { country: 'Kamerun' },
@@ -211,9 +212,11 @@ describe('calculateScores', () => {
       playerUids: ['p1', 'p2', 'p3'],
     });
 
-    // p1 has a valid answer — all three have different answers → unique
-    expect(roundScores.p1).toBe(UNIQUE);
-    expect(breakdown.p1[0].reason).toBe('unique');
+    // p1 gets 5 points (vote tie) — not scored through uniqueness
+    expect(roundScores.p1).toBe(SHARED);
+    expect(breakdown.p1[0].reason).toBe('vote_tie');
+    expect(breakdown.p1[0].validVotes).toBe(1);
+    expect(breakdown.p1[0].invalidVotes).toBe(1);
   });
 
   // ── Scenario 8: Vote threshold edge — below 50% → invalid ──────────────────
@@ -411,5 +414,128 @@ describe('calculateScores', () => {
     expect(breakdown.p1[0].reason).toBe('empty');
     // p2 is the only valid player → bonus
     expect(roundScores.p2).toBe(BONUS);
+  });
+
+  // ── Scenario 12: Vote tie with 2v2 voters → 5 points, reason: 'vote_tie' ────
+  it('scenario 12 — vote tie with 2v2 voters: 5 points with reason "vote_tie"', () => {
+    // p1 is the target; p2 and p3 vote valid, p4 and p5 vote invalid → 2v2 tie
+    const round = makeRound({
+      p1: { country: 'Polska' },
+      p2: { country: 'Kenia' },
+      p3: { country: 'Kamerun' },
+      p4: { country: 'Kuwait' },
+      p5: { country: 'Kolumbia' },
+    });
+    const votes = makeVotes({
+      p2: { 'p1_country': 'valid' },
+      p3: { 'p1_country': 'valid' },
+      p4: { 'p1_country': 'invalid' },
+      p5: { 'p1_country': 'invalid' },
+    });
+    const { roundScores, breakdown } = calculateScores({
+      round,
+      votes,
+      categories: CATEGORIES,
+      playerUids: ['p1', 'p2', 'p3', 'p4', 'p5'],
+    });
+
+    expect(roundScores.p1).toBe(SHARED);
+    expect(breakdown.p1[0].reason).toBe('vote_tie');
+    expect(breakdown.p1[0].validVotes).toBe(2);
+    expect(breakdown.p1[0].invalidVotes).toBe(2);
+  });
+
+  // ── Scenario 13: Majority valid (2 valid, 1 invalid) → normal scoring ────────
+  it('scenario 13 — majority valid (2 valid, 1 invalid): normal scoring applies', () => {
+    // p1 is the target; 2 voters say valid, 1 says invalid → majority valid → normal scoring
+    const round = makeRound({
+      p1: { country: 'Kenia' },
+      p2: { country: 'Kamerun' },
+      p3: { country: 'Kuwait' },
+      p4: { country: 'Kolumbia' },
+    });
+    const votes = makeVotes({
+      p2: { 'p1_country': 'valid' },
+      p3: { 'p1_country': 'valid' },
+      p4: { 'p1_country': 'invalid' },
+    });
+    const { roundScores, breakdown } = calculateScores({
+      round,
+      votes,
+      categories: CATEGORIES,
+      playerUids: ['p1', 'p2', 'p3', 'p4'],
+    });
+
+    // p1 is valid and has a unique answer among the valid players → unique 10
+    expect(roundScores.p1).toBe(UNIQUE);
+    expect(breakdown.p1[0].reason).toBe('unique');
+  });
+
+  // ── Scenario 14: Majority invalid (1 valid, 2 invalid) → 0 points ────────────
+  it('scenario 14 — majority invalid (1 valid, 2 invalid): 0 points with reason "invalid"', () => {
+    // p1 is the target; 1 voter says valid, 2 say invalid → majority invalid → 0 points
+    const round = makeRound({
+      p1: { country: 'Xyzland' },
+      p2: { country: 'Kamerun' },
+      p3: { country: 'Kuwait' },
+      p4: { country: 'Kolumbia' },
+    });
+    const votes = makeVotes({
+      p2: { 'p1_country': 'valid' },
+      p3: { 'p1_country': 'invalid' },
+      p4: { 'p1_country': 'invalid' },
+    });
+    const { roundScores, breakdown } = calculateScores({
+      round,
+      votes,
+      categories: CATEGORIES,
+      playerUids: ['p1', 'p2', 'p3', 'p4'],
+    });
+
+    expect(roundScores.p1).toBe(0);
+    expect(breakdown.p1[0].reason).toBe('invalid');
+  });
+
+  // ── Scenario 15: Breakdown includes validVotes and invalidVotes counts ────────
+  it('scenario 15 — breakdown includes validVotes and invalidVotes counts', () => {
+    const round = makeRound({
+      p1: { country: 'Kenia' },
+      p2: { country: 'Kamerun' },
+      p3: { country: 'Kuwait' },
+    });
+    const votes = makeVotes({
+      p2: { 'p1_country': 'valid' },
+      p3: { 'p1_country': 'invalid' },
+    });
+    const { breakdown } = calculateScores({
+      round,
+      votes,
+      categories: CATEGORIES,
+      playerUids: ['p1', 'p2', 'p3'],
+    });
+
+    // p1 has a vote tie (1 valid, 1 invalid) — breakdown should contain vote counts
+    expect(breakdown.p1[0].validVotes).toBe(1);
+    expect(breakdown.p1[0].invalidVotes).toBe(1);
+  });
+
+  // ── Scenario 16: Case-insensitive: "POLSKA" and "polska" are shared ───────────
+  it('scenario 16 — case-insensitive comparison: "POLSKA" and "polska" are the same answer (shared 5pts)', () => {
+    const round = makeRound({
+      p1: { country: 'POLSKA' },
+      p2: { country: 'polska' },
+    });
+    const votes = makeVotes({});
+    const { roundScores, breakdown } = calculateScores({
+      round,
+      votes,
+      categories: CATEGORIES,
+      playerUids: ['p1', 'p2'],
+    });
+
+    expect(roundScores.p1).toBe(SHARED);
+    expect(roundScores.p2).toBe(SHARED);
+    expect(breakdown.p1[0].reason).toBe('shared');
+    expect(breakdown.p2[0].reason).toBe('shared');
   });
 });
